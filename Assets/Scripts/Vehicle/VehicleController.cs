@@ -91,8 +91,10 @@ namespace DeliveryGame
 
         private void FixedUpdate()
         {
-            // Block all driving input when not in Playing state
-            bool isPlaying = GameManager.Instance?.CurrentState == GameState.Playing;
+            // Block all driving input when not in Playing state.
+            // If GameManager is absent (direct scene testing), treat as Playing.
+            bool isPlaying = GameManager.Instance == null ||
+                             GameManager.Instance.CurrentState == GameState.Playing;
 
             float motor   = isPlaying ? _moveInput.y : 0f;
             float steer   = isPlaying ? _moveInput.x : 0f;
@@ -129,10 +131,14 @@ namespace DeliveryGame
                 return;
             }
 
+            // Enable the map here directly so it works regardless of GameManager state
+            map.Enable();
+
             _moveAction     = map.FindAction("Move");
             _brakeAction    = map.FindAction("Brake");
             _interactAction = map.FindAction("Interact");
             _pauseAction    = map.FindAction("Pause");
+
 
             if (_moveAction != null)
             {
