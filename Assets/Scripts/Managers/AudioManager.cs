@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 namespace DeliveryGame
@@ -6,7 +5,7 @@ namespace DeliveryGame
     /// <summary>
     /// Handles all audio playback: engine loop (pitch-scaled by speed) and one-shot SFX.
     /// Uses two AudioSources — one for the looping engine, one for SFX.
-    /// Reacts to game state and delivery events via subscriptions. No polling.
+    /// Reacts to game state, delivery events, and braking via subscriptions. No polling.
     /// Singleton with DontDestroyOnLoad.
     /// </summary>
     public class AudioManager : MonoBehaviour
@@ -32,19 +31,19 @@ namespace DeliveryGame
         [Header("Engine Pitch Range")]
         [SerializeField] private float _enginePitchIdle = 0.7f;
         [SerializeField] private float _enginePitchMax  = 2.0f;
-        [SerializeField] private float _vehicleMaxSpeed = 25f; // must match VehicleController
+        [SerializeField] private float _vehicleMaxSpeed = 25f; 
         #endregion
 
         #region Private Fields
         private float _masterVolume = 1f;
         private float _sfxVolume    = 1f;
         private float _currentSpeed = 0f;
+        private bool _isBraking = false;
         #endregion
 
         #region Unity Lifecycle
         private void Awake()
         {
-            // Guard: destroy duplicate Singleton
             if (Instance != null && Instance != this)
             {
                 Destroy(gameObject);
@@ -70,7 +69,6 @@ namespace DeliveryGame
 
         private void Start()
         {
-            // Prepare the engine loop without starting playback yet
             if (_engineSource != null && _engineLoop != null)
             {
                 _engineSource.clip   = _engineLoop;
@@ -82,38 +80,44 @@ namespace DeliveryGame
 
         private void Update()
         {
-            // Scale engine pitch smoothly based on vehicle speed
             if (_engineSource == null || !_engineSource.isPlaying) return;
-            float speedRatio   = _vehicleMaxSpeed > 0f ? Mathf.Clamp01(_currentSpeed / _vehicleMaxSpeed) : 0f;
-            _engineSource.pitch = Mathf.Lerp(_enginePitchIdle, _enginePitchMax, speedRatio);
+
+            if (_isBraking)
+            {
+                // Rapidly drop pitch and volume when spacebar is held
+                _engineSource.pitch = Mathf.Lerp(_engineSource.pitch, _enginePitchIdle - 0.2f, Time.deltaTime * 5f);
+                _engineSource.volume = Mathf.Lerp(_engineSource.volume, _masterVolume * 0.5f, Time.deltaTime * 5f);
+            }
+            else
+            {
+                // Scale engine pitch smoothly based on vehicle speed
+                float speedRatio = _vehicleMaxSpeed > 0f ? Mathf.Clamp01(_currentSpeed / _vehicleMaxSpeed) : 0f;
+                _engineSource.pitch = Mathf.Lerp(_engineSource.pitch, Mathf.Lerp(_enginePitchIdle, _enginePitchMax, speedRatio), Time.deltaTime * 3f);
+                _engineSource.volume = Mathf.Lerp(_engineSource.volume, _masterVolume, Time.deltaTime * 3f);
+            }
         }
         #endregion
 
         #region Public Methods
-        /// <summary>Plays a one-shot audio clip through the SFX AudioSource.</summary>
         public void PlaySFX(AudioClip clip)
         {
             if (clip == null || _sfxSource == null) return;
             _sfxSource.PlayOneShot(clip, _sfxVolume * _masterVolume);
         }
 
-        /// <summary>Convenience method — plays the UI click sound.</summary>
         public void PlayUIClick() => PlaySFX(_sfxUIClick);
 
-        /// <summary>Sets master volume and applies to the engine source immediately.</summary>
         public void SetMasterVolume(float vol)
         {
             _masterVolume = Mathf.Clamp01(vol);
             if (_engineSource != null) _engineSource.volume = _masterVolume;
         }
 
-        /// <summary>Sets the SFX volume used for all one-shot clips.</summary>
         public void SetSFXVolume(float vol) => _sfxVolume = Mathf.Clamp01(vol);
 
-        /// <summary>
-        /// Called by VehicleController every FixedUpdate to keep engine pitch in sync.
-        /// </summary>
         public void UpdateVehicleSpeed(float speed) => _currentSpeed = speed;
+
+        public void SetBraking(bool isBraking) => _isBraking = isBraking;
         #endregion
 
         #region Event Handlers
@@ -142,7 +146,6 @@ namespace DeliveryGame
             }
         }
 
-        // Named handlers so they can be properly unsubscribed (lambdas cannot be unsubscribed)
         private void HandlePackagePickedUp(int deliveryId)  => PlaySFX(_sfxPickup);
         private void HandleDeliverySuccessful(int deliveryId) => PlaySFX(_sfxDeliver);
         #endregion
