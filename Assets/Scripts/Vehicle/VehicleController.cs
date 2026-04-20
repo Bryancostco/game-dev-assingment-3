@@ -27,7 +27,7 @@ namespace DeliveryGame
         [Header("Driving Parameters")]
         [SerializeField] private float _maxMotorTorque   = 400f;
         [SerializeField] private float _maxSteeringAngle = 35f;
-        [SerializeField] private float _maxSpeed         = 25f;   // m/s
+        [SerializeField] private float _maxSpeed         = 25f;  
         [SerializeField] private float _brakeTorque      = 2000f;
 
         [Header("Anti-Roll Bar")]
@@ -59,13 +59,11 @@ namespace DeliveryGame
         {
             _rb = GetComponent<Rigidbody>();
 
-            // Lower center of mass prevents flipping at speed
             _rb.centerOfMass          = new Vector3(0f, -0.5f, 0f);
             _rb.mass                  = 1400f;
             _rb.interpolation         = RigidbodyInterpolation.Interpolate;
             _rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
-            // Store initial pose as the "safe" reset target
             _lastValidPosition = transform.position + Vector3.up;
             _lastValidRotation = transform.rotation;
 
@@ -75,7 +73,6 @@ namespace DeliveryGame
         private void OnEnable()
         {
             var playerMap = _inputActionsAsset?.FindActionMap("Player");
-            // Only enable player input if we are currently playing
             if (GameManager.Instance == null || GameManager.Instance.CurrentState == GameState.Playing)
                 playerMap?.Enable();
 
@@ -91,14 +88,12 @@ namespace DeliveryGame
 
         private void FixedUpdate()
         {
-            // Block all driving input when not in Playing state.
-            // If GameManager is absent (direct scene testing), treat as Playing.
             bool isPlaying = GameManager.Instance == null ||
                              GameManager.Instance.CurrentState == GameState.Playing;
 
             float motor   = isPlaying ? _moveInput.y : 0f;
             float steer   = isPlaying ? _moveInput.x : 0f;
-            bool  braking = isPlaying ? _brakeHeld   : true; // Force brake when paused/won/lost
+            bool  braking = isPlaying ? _brakeHeld   : true; 
 
             ApplyMotor(motor);
             ApplySteering(steer);
@@ -110,6 +105,7 @@ namespace DeliveryGame
             if (isPlaying)
             {
                 AudioManager.Instance?.UpdateVehicleSpeed(_rb.linearVelocity.magnitude);
+                AudioManager.Instance?.SetBraking(_brakeHeld);
                 TrackFlip();
             }
         }
@@ -118,27 +114,17 @@ namespace DeliveryGame
         #region Input Binding
         private void BindInputActions()
         {
-            if (_inputActionsAsset == null)
-            {
-                Debug.LogError("[VehicleController] InputActionAsset not assigned in the Inspector.");
-                return;
-            }
+            if (_inputActionsAsset == null) return;
 
             var map = _inputActionsAsset.FindActionMap("Player");
-            if (map == null)
-            {
-                Debug.LogError("[VehicleController] 'Player' action map not found in InputActionAsset.");
-                return;
-            }
+            if (map == null) return;
 
-            // Enable the map here directly so it works regardless of GameManager state
             map.Enable();
 
             _moveAction     = map.FindAction("Move");
             _brakeAction    = map.FindAction("Brake");
             _interactAction = map.FindAction("Interact");
             _pauseAction    = map.FindAction("Pause");
-
 
             if (_moveAction != null)
             {
@@ -165,7 +151,6 @@ namespace DeliveryGame
 
         private void OnInteract(InputAction.CallbackContext ctx)
         {
-            // Input fires in Playing state only (Player map is disabled while paused)
             DeliveryManager.Instance?.PlayerInteracted();
         }
         #endregion
@@ -173,7 +158,6 @@ namespace DeliveryGame
         #region Physics Methods
         private void ApplyMotor(float vertical)
         {
-            // Cap torque at max speed to prevent runaway acceleration
             float speed  = _rb.linearVelocity.magnitude;
             float torque = speed < _maxSpeed ? vertical * _maxMotorTorque : 0f;
             _wheelRL.motorTorque = torque;
@@ -196,10 +180,6 @@ namespace DeliveryGame
             _wheelRR.brakeTorque = torque;
         }
 
-        /// <summary>
-        /// Anti-roll bar: reduces the suspension travel difference between left and right wheels
-        /// to counteract body roll at speed.
-        /// </summary>
         private void ApplyAntiRollBar(WheelCollider left, WheelCollider right)
         {
             float travelL = 1f;
@@ -217,7 +197,7 @@ namespace DeliveryGame
 
             float force = (travelL - travelR) * _antiRollForce;
             if (groundedL) _rb.AddForceAtPosition(left.transform.up  * -force, left.transform.position);
-            if (groundedR) _rb.AddForceAtPosition(right.transform.up *  force, right.transform.position);
+            if (groundedR) _rb.AddForceAtPosition(right.transform.up * force, right.transform.position);
         }
 
         private void SyncAllWheelMeshes()
@@ -235,10 +215,6 @@ namespace DeliveryGame
             mesh.SetPositionAndRotation(pos, rot);
         }
 
-        /// <summary>
-        /// Detects if the vehicle has been upside-down (transform.up.y less than 0) for too long
-        /// and auto-resets it to the last safe position/rotation.
-        /// </summary>
         private void TrackFlip()
         {
             if (transform.up.y < 0f)
@@ -250,7 +226,6 @@ namespace DeliveryGame
             else
             {
                 _flipTimer = 0f;
-                // Cache valid ground pose for reset fallback
                 _lastValidPosition = transform.position + Vector3.up * 0.5f;
                 _lastValidRotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
             }
@@ -274,12 +249,10 @@ namespace DeliveryGame
             switch (state)
             {
                 case GameState.Playing:
-                    // Input fires during play; disable UI map
                     playerMap?.Enable();
                     uiMap?.Disable();
                     break;
                 case GameState.Paused:
-                    // Disable player controls; enable UI map for menu navigation
                     playerMap?.Disable();
                     uiMap?.Enable();
                     break;
