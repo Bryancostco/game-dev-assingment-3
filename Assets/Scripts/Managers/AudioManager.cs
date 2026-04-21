@@ -23,7 +23,7 @@ namespace DeliveryGame
         [SerializeField] private AudioClip _engineLoop;
         [SerializeField] private AudioClip _sfxPickup;
         [SerializeField] private AudioClip _sfxDeliver;
-        [SerializeField] private AudioClip _sfxCrash;
+        [SerializeField] private AudioClip _sfxCrash;   // Assign ENGINELOOP/SFXCRASH.mp3
         [SerializeField] private AudioClip _sfxUIClick;
         [SerializeField] private AudioClip _sfxWin;
         [SerializeField] private AudioClip _sfxLose;
@@ -105,7 +105,8 @@ namespace DeliveryGame
             _sfxSource.PlayOneShot(clip, _sfxVolume * _masterVolume);
         }
 
-        public void PlayUIClick() => PlaySFX(_sfxUIClick);
+        public void PlayUIClick()    => PlaySFX(_sfxUIClick);
+        public void PlayCrashSFX()   => PlaySFX(_sfxCrash);
 
         public void SetMasterVolume(float vol)
         {

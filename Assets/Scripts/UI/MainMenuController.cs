@@ -1,7 +1,6 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement; 
 
 namespace DeliveryGame
 {
@@ -81,9 +80,8 @@ namespace DeliveryGame
         {
             if (_isCameraMoving) return;
             AudioManager.Instance?.PlayUIClick();
-            
             Time.timeScale = 1f;
-            SceneManager.LoadScene("Level_01"); 
+            GameManager.Instance?.StartGame();
         }
 
         public void OnOpenSettings()

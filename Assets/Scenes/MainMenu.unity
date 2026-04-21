@@ -4990,6 +4990,10 @@ PrefabInstance:
       value: Managers
       objectReference: {fileID: 0}
     - target: {fileID: 8881530234114729450, guid: a054f5afcac4b2c43827d2dfe96d8390, type: 3}
+      propertyPath: _sfxWin
+      value: 
+      objectReference: {fileID: 8300000, guid: 52cebb014b48c7449b5b4b4c3fbd5c00, type: 3}
+    - target: {fileID: 8881530234114729450, guid: a054f5afcac4b2c43827d2dfe96d8390, type: 3}
       propertyPath: _sfxLose
       value: 
       objectReference: {fileID: 8300000, guid: 0b88295a2959aae4b8b0ac7d6b01aed7, type: 3}
@@ -5000,7 +5004,7 @@ PrefabInstance:
     - target: {fileID: 8881530234114729450, guid: a054f5afcac4b2c43827d2dfe96d8390, type: 3}
       propertyPath: _sfxPickup
       value: 
-      objectReference: {fileID: 8300000, guid: 49a49346ad7172648a5912d1913ab47d, type: 3}
+      objectReference: {fileID: 8300000, guid: 8bc6e39bedd269c429c2ab24175e4ee3, type: 3}
     - target: {fileID: 8881530234114729450, guid: a054f5afcac4b2c43827d2dfe96d8390, type: 3}
       propertyPath: _engineLoop
       value: 

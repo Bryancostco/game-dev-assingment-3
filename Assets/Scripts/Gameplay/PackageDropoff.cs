@@ -35,6 +35,10 @@ namespace DeliveryGame
             _trigger.isTrigger = true;
             _trigger.radius    = _triggerRadius;
             gameObject.layer   = LayerMask.NameToLayer("Dropoff");
+
+            // Auto-find first child as marker visual if nothing assigned in Inspector
+            if (_markerVisual == null && transform.childCount > 0)
+                _markerVisual = transform.GetChild(0).gameObject;
         }
 
         private void OnEnable()
@@ -49,12 +53,15 @@ namespace DeliveryGame
 
         private void OnTriggerEnter(Collider other)
         {
-            if (!other.CompareTag("Player")) return;
+if (!IsPlayer(other)) return;
+            if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameState.Playing) return;
+            DeliveryManager.Instance?.TryDeliver(_deliveryId);
+        }
 
-            // Guard: only process when Playing (timer expiry or pause must not award delivery)
-            if (GameManager.Instance?.CurrentState != GameState.Playing) return;
-
-            // DeliveryManager validates whether the player holds the right package
+        private void OnTriggerStay(Collider other)
+        {
+            if (!IsPlayer(other)) return;
+            if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameState.Playing) return;
             DeliveryManager.Instance?.TryDeliver(_deliveryId);
         }
         #endregion
@@ -63,10 +70,15 @@ namespace DeliveryGame
         private void HandleDeliverySuccessful(int deliveryId)
         {
             if (deliveryId != _deliveryId) return;
-
-            // Hide the ground marker after the matching delivery is completed
             if (_markerVisual != null) _markerVisual.SetActive(false);
             gameObject.SetActive(false);
+        }
+
+        private static bool IsPlayer(Collider other)
+        {
+            if (other.CompareTag("Player")) return true;
+            if (other.transform.root.CompareTag("Player")) return true;
+            return other.GetComponentInParent<VehicleController>() != null;
         }
         #endregion
     }

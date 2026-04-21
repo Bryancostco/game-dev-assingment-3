@@ -70,6 +70,7 @@ namespace DeliveryGame
             _currentDeliveryId   = -1;
             _isProcessing        = false;
             _pickupInRange       = null;
+            UIManager.Instance?.SetObjectiveText("Pick up the next package");
         }
         #endregion
 
@@ -145,23 +146,16 @@ namespace DeliveryGame
                 return;
             }
 
-            // Guard: wrong delivery zone
-            if (_currentDeliveryId != deliveryId)
-            {
-                UIManager.Instance?.ShowNotification("Wrong delivery zone!");
-                return;
-            }
-
             // Guard: deliveries only valid while playing
             if (GameManager.Instance?.CurrentState != GameState.Playing) return;
 
             _isProcessing = true;
 
-            int completedId  = _currentDeliveryId;
             _currentDeliveryId = -1;
             _deliveriesCompleted++;
 
-            OnDeliverySuccessful?.Invoke(completedId);
+            // Fire with the dropoff's ID so the correct zone hides itself
+            OnDeliverySuccessful?.Invoke(deliveryId);
             OnDeliveryCountChanged?.Invoke(_deliveriesCompleted, _totalDeliveries);
 
             // Check win condition — fires GameManager.Won via event chain

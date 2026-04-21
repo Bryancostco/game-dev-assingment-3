@@ -36,6 +36,10 @@ namespace DeliveryGame
             _trigger.isTrigger = true;
             _trigger.radius    = _triggerRadius;
             gameObject.layer   = LayerMask.NameToLayer("Pickup");
+
+            // Auto-find first child as visual if nothing assigned in Inspector
+            if (_packageVisual == null && transform.childCount > 0)
+                _packageVisual = transform.GetChild(0).gameObject;
         }
 
         private void OnEnable()
@@ -51,18 +55,15 @@ namespace DeliveryGame
 
         private void OnTriggerEnter(Collider other)
         {
-            if (!other.CompareTag("Player")) return;
+            if (!IsPlayer(other)) return;
 
-            // Register this zone so DeliveryManager.PlayerInteracted() routes here
             DeliveryManager.Instance?.RegisterPickupZone(this);
             UIManager.Instance?.ShowNotification("Press E to pick up package");
         }
 
         private void OnTriggerExit(Collider other)
         {
-            if (!other.CompareTag("Player")) return;
-
-            // Unregister so interact presses outside this zone are ignored
+            if (!IsPlayer(other)) return;
             DeliveryManager.Instance?.UnregisterPickupZone(this);
         }
         #endregion
@@ -71,10 +72,16 @@ namespace DeliveryGame
         private void HandlePackagePickedUp(int deliveryId)
         {
             if (deliveryId != _deliveryId) return;
-
-            // Hide the visual and deactivate trigger once collected
             if (_packageVisual != null) _packageVisual.SetActive(false);
             gameObject.SetActive(false);
+        }
+
+        // Checks the collider itself AND any parent for Player tag or VehicleController
+        private static bool IsPlayer(Collider other)
+        {
+            if (other.CompareTag("Player")) return true;
+            if (other.transform.root.CompareTag("Player")) return true;
+            return other.GetComponentInParent<VehicleController>() != null;
         }
         #endregion
     }

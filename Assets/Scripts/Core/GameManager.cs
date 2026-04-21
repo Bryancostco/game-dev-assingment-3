@@ -35,9 +35,6 @@ namespace DeliveryGame
         [SerializeField] private string _level01Scene  = "Level_01";
         [SerializeField] private string _level02Scene  = "Level_02";
 
-        [Header("Default Level Parameters (overridden by SceneUIConnector)")]
-        [SerializeField] private int   _defaultDeliveries = 5;
-        [SerializeField] private float _defaultLevelTime  = 180f;
         #endregion
 
         #region Private Fields
@@ -185,7 +182,17 @@ namespace DeliveryGame
             OnGameStateChanged?.Invoke(newState);
         }
 
-        private void HandleAllDeliveriesComplete() => SetState(GameState.Won);
+        private void HandleAllDeliveriesComplete()
+        {
+            SetState(GameState.Won);
+            StartCoroutine(AutoLoadNextLevel());
+        }
+
+        private System.Collections.IEnumerator AutoLoadNextLevel()
+        {
+            yield return new WaitForSeconds(2.5f);
+            LoadNextLevel();
+        }
 
         private void HandleVehicleDestroyed()
         {

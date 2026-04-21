@@ -25,10 +25,11 @@ namespace DeliveryGame
         [SerializeField] private Transform _meshRR;
 
         [Header("Driving Parameters")]
-        [SerializeField] private float _maxMotorTorque   = 400f;
+        [SerializeField] private float _maxMotorTorque   = 1200f;
         [SerializeField] private float _maxSteeringAngle = 35f;
-        [SerializeField] private float _maxSpeed         = 25f;  
-        [SerializeField] private float _brakeTorque      = 2000f;
+        [SerializeField] private float _maxSpeed         = 35f;
+        [SerializeField] private float _brakeTorque      = 8000f;
+        [SerializeField] private float _engineBrake      = 300f;
 
         [Header("Anti-Roll Bar")]
         [SerializeField] private float _antiRollForce = 5000f;
@@ -173,7 +174,14 @@ namespace DeliveryGame
 
         private void ApplyBrakes(bool active)
         {
-            float torque = active ? _brakeTorque : 0f;
+            float torque;
+            if (active)
+                torque = _brakeTorque;
+            else if (Mathf.Abs(_moveInput.y) < 0.05f)
+                torque = _engineBrake; // natural slowdown when no throttle
+            else
+                torque = 0f;
+
             _wheelFL.brakeTorque = torque;
             _wheelFR.brakeTorque = torque;
             _wheelRL.brakeTorque = torque;

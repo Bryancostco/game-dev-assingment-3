@@ -28,8 +28,6 @@ namespace DeliveryGame
         [SerializeField] private float _damageSpeedThreshold = 2f;   // min relative velocity (m/s) to take damage
         [SerializeField] private float _invincibilityTime    = 0.5f; // seconds of post-hit invincibility
 
-        [Header("Audio")]
-        [SerializeField] private AudioClip _crashClip;
         #endregion
 
         #region Private Fields
@@ -87,7 +85,7 @@ namespace DeliveryGame
             // Start invincibility window to prevent the same crash dealing damage multiple times
             _invincibilityTimer = _invincibilityTime;
 
-            AudioManager.Instance?.PlaySFX(_crashClip);
+            AudioManager.Instance?.PlayCrashSFX();
         }
         #endregion
 

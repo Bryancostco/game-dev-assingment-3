@@ -14,9 +14,10 @@ namespace DeliveryGame
     [DefaultExecutionOrder(-100)] // Run before all other scripts
     public class ManagerBootstrap : MonoBehaviour
     {
-        private void Awake()
+        // All Awake() calls complete before any Start() runs, so managers are guaranteed to have
+        // set their Instance fields by the time this check runs.
+        private void Start()
         {
-            // Sanity check: warn if any expected manager is missing from the hierarchy
             if (GameManager.Instance     == null) Debug.LogWarning("[Bootstrap] GameManager not found.");
             if (DeliveryManager.Instance == null) Debug.LogWarning("[Bootstrap] DeliveryManager not found.");
             if (UIManager.Instance       == null) Debug.LogWarning("[Bootstrap] UIManager not found.");
